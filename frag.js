@@ -1,8 +1,9 @@
 
 var parseObj = require('parse-obj');
 var Mesh3d = require('./geo/Mesh3d');
-var QuadTree = require('./QuadTree.js');
-var LeafCollector = require('./LeafCollector.js');
+var QuadTree = require('./spatial/QuadTree.js');
+var LeafCollector = require('./spatial/LeafCollector.js');
+var ObjWriter = require('./io/ObjWriter.js');
 
 var fs = require('fs');
 
@@ -17,6 +18,7 @@ var totalPolysDone = 0;
 
 function blast_off(file)
 {
+    console.log("");
     process.stdout.write("Loading '"+file+"'...");
 
     readfile(file, function(data){
@@ -40,7 +42,7 @@ function fragment(data, maxpolygons)
         process.exit(0);
     }
 
-    console.log("\nSubdividing terrain mesh using `Quadtree` method:");
+    console.log("\nSubdividing LIDAR terrain using method `Quadtree`:");
 
     var quadtree = new QuadTree(maxpolygons, qt_progress);
 
@@ -56,7 +58,8 @@ function fragment(data, maxpolygons)
 
     quadtree.walkToAll(leafCollector);
 
-    console.log("\r\n\r\nExtracting and reordering vertices for "+leafCollector.leaves.length+" models...");
+    console.log("\r\nWaw!");
+    console.log("\r\nExtracting and reindexing vertices for "+leafCollector.leaves.length+" meshes...");
 
     var meshes = [];
 
@@ -71,9 +74,20 @@ function fragment(data, maxpolygons)
         });
     }
 
-    console.log("\r\n");
+    console.log("\r\nBoom.\r\n\r\nFlushing hierarchy to disk...");
+
+    var objWriter = new ObjWriter();
+
+    for (var t=0; t<meshes.length; t++)
+    {
+        objWriter.write(__dirname+"/testout/"+t+".obj", meshes[t]);
+    }
+
+
 
 }
+
+
 
 
 
@@ -131,8 +145,9 @@ function showProgressBar(pc)
     for (var t=0; t<20; t++)
     {
         if (t <=scale)
+        //p+="-";
             p+="\u2764 ";
-        else p+="-";
+        else p+="--";
     }
 
     process.stdout.write(p+"] "+pc+"%");
